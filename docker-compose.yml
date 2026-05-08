@@ -1,0 +1,53 @@
+services:
+  app:
+    build: .
+    image: es-visible:latest
+    container_name: es-visible-app
+    command: php artisan serve --host=0.0.0.0 --port=8000
+    ports:
+      - "0.0.0.0:8000:8000"
+    volumes:
+      - ./:/app
+      - app-vendor:/app/vendor
+    environment:
+      APP_URL: http://10.0.0.24:8000
+      BROADCAST_CONNECTION: conveyor
+      CONVEYOR_PROTOCOL: ws
+      CONVEYOR_URI: conveyor
+      CONVEYOR_PORT: 8181
+      CONVEYOR_PUBLIC_URI: "10.0.0.24"
+    depends_on:
+      - conveyor
+
+  conveyor:
+    build: .
+    image: es-visible:latest
+    container_name: es-visible-conveyor
+    command: php conveyor.php
+    ports:
+      - "0.0.0.0:8181:8181"
+    volumes:
+      - ./:/app
+      - app-vendor:/app/vendor
+    environment:
+      CONVEYOR_HOST: 0.0.0.0
+      CONVEYOR_PORT: 8181
+
+  queue:
+    build: .
+    image: es-visible:latest
+    container_name: es-visible-queue
+    command: php artisan queue:work --tries=3 --timeout=300
+    volumes:
+      - ./:/app
+      - app-vendor:/app/vendor
+    environment:
+      BROADCAST_CONNECTION: conveyor
+      CONVEYOR_PROTOCOL: ws
+      CONVEYOR_URI: conveyor
+      CONVEYOR_PORT: 8181
+    depends_on:
+      - app
+
+volumes:
+  app-vendor:
