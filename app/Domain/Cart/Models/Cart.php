@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Domain\Cart\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Spatie\EventSourcing\Projections\Projection;
 
 /**
  * @property string $uuid
@@ -16,15 +16,9 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-final class Cart extends Model
+final class Cart extends Projection
 {
     protected $table = 'carts';
-
-    protected $primaryKey = 'uuid';
-
-    public $incrementing = false;
-
-    protected $keyType = 'string';
 
     protected $fillable = [
         'uuid',

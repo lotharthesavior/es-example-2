@@ -21,7 +21,7 @@ use App\Exceptions\Domain\NoDeliverableOrderException;
 use App\Exceptions\Domain\NoPlaceableOrderException;
 use App\Exceptions\Domain\NoRefundableOrderException;
 use App\Exceptions\Domain\NoShippableOrderException;
-use App\Models\Order;
+use App\Domain\Order\Models\Order;
 use Illuminate\Support\Str;
 use Spatie\EventSourcing\Commands\CommandBus;
 

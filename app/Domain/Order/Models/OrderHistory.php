@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Domain\Order\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Spatie\EventSourcing\Projections\Projection;
 
 /**
  * @property int $id
@@ -16,7 +16,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-final class OrderHistory extends Model
+final class OrderHistory extends Projection
 {
     protected $table = 'order_history';
 
@@ -31,4 +31,24 @@ final class OrderHistory extends Model
         'event_data' => 'array',
         'occurred_at' => 'datetime',
     ];
+
+    public function getKeyName(): string
+    {
+        return 'id';
+    }
+
+    public function getKeyType(): string
+    {
+        return 'int';
+    }
+
+    public function getIncrementing(): bool
+    {
+        return true;
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'id';
+    }
 }

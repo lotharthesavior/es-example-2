@@ -2,30 +2,39 @@
 
 declare(strict_types=1);
 
-namespace App\Projectors;
+namespace App\Domain\Cart\Projectors;
 
 use App\Domain\Cart\Events\CartCleared;
+use App\Domain\Cart\Events\CheckoutCancelled;
 use App\Domain\Cart\Events\CheckoutStarted;
 use App\Domain\Cart\Events\ItemAddedToCart;
 use App\Domain\Cart\Events\ItemRemovedFromCart;
-use App\Models\Cart;
+use App\Domain\Cart\Models\Cart;
+use App\Projectors\BaseProjector;
+use Illuminate\Support\Carbon;
 use Spatie\EventSourcing\StoredEvents\StoredEvent;
 
 final class CartProjector extends BaseProjector
 {
     public function onItemAddedToCart(ItemAddedToCart $event, StoredEvent $storedEvent): void
     {
-        /** @var Cart $cart */
-        $cart = Cart::query()->firstOrCreate(
-            ['uuid' => $storedEvent->aggregate_uuid],
-            [
+        $occurredAt = Carbon::parse($storedEvent->created_at);
+
+        $existing = Cart::find($storedEvent->aggregate_uuid);
+
+        if ($existing === null) {
+            $cart = Cart::new()->writeable();
+            $cart->fill([
                 'uuid' => $storedEvent->aggregate_uuid,
                 'user_id' => 'anonymous',
                 'status' => 'active',
                 'items' => [],
                 'total_in_cents' => 0,
-            ]
-        );
+            ]);
+            $cart->created_at = $occurredAt;
+        } else {
+            $cart = $existing->writeable();
+        }
 
         /** @var array<string, array{productId: string, productName: string, quantity: int, priceInCents: int}> $items */
         $items = is_array($cart->items) ? $cart->items : [];
@@ -49,16 +58,19 @@ final class CartProjector extends BaseProjector
 
         $cart->items = $items;
         $cart->total_in_cents = $total;
+        $cart->updated_at = $occurredAt;
+        $cart->timestamps = false;
         $cart->save();
     }
 
     public function onItemRemovedFromCart(ItemRemovedFromCart $event, StoredEvent $storedEvent): void
     {
-        /** @var Cart|null $cart */
-        $cart = Cart::query()->where('uuid', $storedEvent->aggregate_uuid)->first();
+        $cart = Cart::find($storedEvent->aggregate_uuid);
         if ($cart === null) {
             return;
         }
+
+        $cart = $cart->writeable();
 
         /** @var array<string, array{productId: string, productName: string, quantity: int, priceInCents: int}> $items */
         $items = is_array($cart->items) ? $cart->items : [];
@@ -79,32 +91,52 @@ final class CartProjector extends BaseProjector
 
         $cart->items = $items;
         $cart->total_in_cents = $total;
+        $cart->updated_at = Carbon::parse($storedEvent->created_at);
+        $cart->timestamps = false;
         $cart->save();
     }
 
     public function onCartCleared(CartCleared $event, StoredEvent $storedEvent): void
     {
-        /** @var Cart|null $cart */
-        $cart = Cart::query()->where('uuid', $storedEvent->aggregate_uuid)->first();
+        $cart = Cart::find($storedEvent->aggregate_uuid);
         if ($cart === null) {
             return;
         }
 
+        $cart = $cart->writeable();
         $cart->items = [];
         $cart->total_in_cents = 0;
+        $cart->updated_at = Carbon::parse($storedEvent->created_at);
+        $cart->timestamps = false;
         $cart->save();
     }
 
     public function onCheckoutStarted(CheckoutStarted $event, StoredEvent $storedEvent): void
     {
-        /** @var Cart|null $cart */
-        $cart = Cart::query()->where('uuid', $storedEvent->aggregate_uuid)->first();
+        $cart = Cart::find($storedEvent->aggregate_uuid);
         if ($cart === null) {
             return;
         }
 
+        $cart = $cart->writeable();
         $cart->user_id = $event->userId;
         $cart->status = 'checking_out';
+        $cart->updated_at = Carbon::parse($storedEvent->created_at);
+        $cart->timestamps = false;
+        $cart->save();
+    }
+
+    public function onCheckoutCancelled(CheckoutCancelled $event, StoredEvent $storedEvent): void
+    {
+        $cart = Cart::find($storedEvent->aggregate_uuid);
+        if ($cart === null) {
+            return;
+        }
+
+        $cart = $cart->writeable();
+        $cart->status = 'active';
+        $cart->updated_at = Carbon::parse($storedEvent->created_at);
+        $cart->timestamps = false;
         $cart->save();
     }
 }

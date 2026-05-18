@@ -200,9 +200,14 @@
                     {{-- Time Machine --}}
                     <div>
                         <div class="text-[10px] text-gray-500 uppercase tracking-wider mb-1.5">⏳ Time Machine</div>
-                        <button data-action="replay-events" class="btn-press w-full bg-yellow-800 hover:bg-yellow-700 text-white text-[11px] font-semibold px-2 py-2 rounded-md transition-all flex items-center justify-center gap-1 border border-yellow-700">
-                            <span>⏮</span> Replay All Events
-                        </button>
+                        <div class="grid grid-cols-1 gap-1.5">
+                            <button data-action="replay-events" class="btn-press w-full bg-yellow-800 hover:bg-yellow-700 text-white text-[11px] font-semibold px-2 py-2 rounded-md transition-all flex items-center justify-center gap-1 border border-yellow-700">
+                                <span>⏮</span> Replay All Events
+                            </button>
+                            <button data-action="start-new" class="btn-press w-full bg-slate-700 hover:bg-slate-600 text-white text-[11px] font-semibold px-2 py-2 rounded-md transition-all flex items-center justify-center gap-1 border border-slate-600">
+                                <span>🆕</span> Start New Session
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -357,8 +362,21 @@
 
 <script>
     // State
-    let currentCartUuid = null;
-    let currentOrderUuid = null;
+    const SESSION_KEY = 'eventSourcingDemo.session';
+    function loadSession() {
+        try {
+            const raw = localStorage.getItem(SESSION_KEY);
+            return raw ? JSON.parse(raw) : {};
+        } catch (_) { return {}; }
+    }
+    function saveSession() {
+        try {
+            localStorage.setItem(SESSION_KEY, JSON.stringify({ cartUuid: currentCartUuid, orderUuid: currentOrderUuid }));
+        } catch (_) {}
+    }
+    const _session = loadSession();
+    let currentCartUuid = _session.cartUuid || null;
+    let currentOrderUuid = _session.orderUuid || null;
 
     // Event type config
     const EVENT_CONFIG = {
@@ -374,6 +392,21 @@
         OrderRefunded:       { icon: '💰', bg: 'bg-orange-900/30', border: 'border-orange-700/50', badge: 'bg-orange-700 text-orange-100' },
     };
 
+    function relativeTime(iso) {
+        if (!iso) return 'just now';
+        const t = new Date(iso).getTime();
+        if (isNaN(t)) return 'just now';
+        const diff = Math.round((Date.now() - t) / 1000);
+        if (diff < 5) return 'just now';
+        if (diff < 60) return diff + 's ago';
+        const m = Math.round(diff / 60);
+        if (m < 60) return m + (m === 1 ? ' minute ago' : ' minutes ago');
+        const h = Math.round(m / 60);
+        if (h < 24) return h + (h === 1 ? ' hour ago' : ' hours ago');
+        const d = Math.round(h / 24);
+        return d + (d === 1 ? ' day ago' : ' days ago');
+    }
+
     function createEventCard(data) {
         const cfg = EVENT_CONFIG[data.eventName] || EVENT_CONFIG['OrderPlaced'];
         const payloadStr = Object.entries(data.payload || {})
@@ -387,7 +420,7 @@
             <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-xs font-bold px-2 py-0.5 rounded-full ${cfg.badge}">${data.eventName}</span>
-                    <span class="text-xs text-gray-500">just now</span>
+                    <span class="text-xs text-gray-500">${relativeTime(data.occurredAt)}</span>
                 </div>
                 ${payloadStr ? `<div class="text-xs text-gray-400 mt-1">${payloadStr}</div>` : ''}
                 <div class="text-xs text-gray-600 mt-0.5 truncate">UUID: ${(data.aggregateUuid || '').substring(0, 8)}...</div>
@@ -423,6 +456,18 @@
     }
 
     async function triggerAction(action, extraBody = {}) {
+        if (action === 'start-new') {
+            currentCartUuid = null;
+            currentOrderUuid = null;
+            saveSession();
+            currentState = { cart: null, order: null };
+            renderCartPanel(null);
+            renderOrderPanel(null);
+            refreshButtonStates();
+            showFeedback({ message: 'Session reset — Add to Cart will start a fresh customer.' });
+            return;
+        }
+
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
         try {
@@ -436,8 +481,17 @@
             if (['remove-from-cart', 'checkout'].includes(action) && currentCartUuid) {
                 body.cart_uuid = currentCartUuid;
             }
+            if (action === 'remove-from-cart') {
+                const sel = document.getElementById('product-select');
+                if (sel && sel.value) body.product_id = sel.value;
+            }
             if (['mark-as-paid', 'mark-as-shipped', 'mark-as-delivered', 'cancel-order', 'refund-order'].includes(action) && currentOrderUuid) {
                 body.order_uuid = currentOrderUuid;
+            }
+
+            if (action === 'replay-events') {
+                const stream = document.getElementById('event-stream');
+                if (stream) stream.innerHTML = '';
             }
 
             const response = await fetch(`/demo/${action}`, {
@@ -462,6 +516,7 @@
             // Track state
             if (data.cart_uuid) currentCartUuid = data.cart_uuid;
             if (data.order_uuid) currentOrderUuid = data.order_uuid;
+            saveSession();
 
             // Refresh stats
             const statsRes = await fetch('/api/stats');
@@ -642,6 +697,12 @@
                 return { enabled: true, reason: 'Refund the order.' };
             case 'replay-events':
                 return { enabled: true, reason: 'Re-project all events into the read models.' };
+            case 'start-new': {
+                const terminal = order && ['delivered', 'cancelled', 'refunded'].includes(order.status);
+                if (terminal) return { enabled: true, reason: `Order is ${order.status}; reset session for a new customer.` };
+                if (!cart && !order) return { enabled: true, reason: 'No active cart yet — click to start fresh.' };
+                return { enabled: false, reason: 'Complete or cancel the current order before starting a new session.' };
+            }
             default:
                 return { enabled: true, reason: '' };
         }
@@ -666,7 +727,9 @@
         });
     }
 
+    let refreshStateGen = 0;
     async function refreshState() {
+        const gen = ++refreshStateGen;
         const params = new URLSearchParams();
         if (currentCartUuid) params.set('cart_uuid', currentCartUuid);
         if (currentOrderUuid) params.set('order_uuid', currentOrderUuid);
@@ -674,9 +737,11 @@
         try {
             const res = await fetch('/api/state' + (qs ? ('?' + qs) : ''));
             const data = await res.json();
+            if (gen !== refreshStateGen) return; // stale response — newer refresh in flight
             currentState = data || { cart: null, order: null };
             if (currentState.cart && currentState.cart.uuid) currentCartUuid = currentState.cart.uuid;
             if (currentState.order && currentState.order.uuid) currentOrderUuid = currentState.order.uuid;
+            saveSession();
             renderCartPanel(currentState.cart);
             renderOrderPanel(currentState.order);
             refreshButtonStates();
@@ -734,7 +799,7 @@
         if (cfg && typeof window.Conveyor !== 'undefined') {
             new window.Conveyor({
                 protocol: cfg.protocol,
-                uri: cfg.uri,
+                uri: window.location.hostname || cfg.uri,
                 port: cfg.port,
                 channel: cfg.channel,
                 onReady: () => { window._wsReady = true; },

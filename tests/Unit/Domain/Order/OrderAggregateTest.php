@@ -180,7 +180,7 @@ final class OrderAggregateTest extends TestCase
                 ));
             })
             ->assertRecorded([
-                new OrderCancelled(reason: 'Changed my mind'),
+                new OrderCancelled(cartUuid: 'cart-uuid-1', reason: 'Changed my mind'),
             ]);
     }
 
@@ -198,7 +198,7 @@ final class OrderAggregateTest extends TestCase
                 ));
             })
             ->assertRecorded([
-                new OrderCancelled(reason: 'Customer requested'),
+                new OrderCancelled(cartUuid: 'cart-uuid-1', reason: 'Customer requested'),
             ]);
     }
 

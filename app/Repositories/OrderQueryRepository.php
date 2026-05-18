@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Domain\Order\Enums\OrderStatus;
-use App\Models\Order;
+use App\Domain\Order\Models\Order;
 use Illuminate\Database\Eloquent\Collection;
 
 final class OrderQueryRepository
@@ -28,8 +28,8 @@ final class OrderQueryRepository
 
     public function revenueToday(): int
     {
-        return (int) Order::whereDate('created_at', today())
-            ->whereNotIn('status', [OrderStatus::Cancelled->value, OrderStatus::Refunded->value])
+        return (int) Order::whereDate('delivered_at', today())
+            ->where('status', OrderStatus::Delivered->value)
             ->sum('total_in_cents');
     }
 

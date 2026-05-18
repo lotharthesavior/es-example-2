@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Projectors;
+namespace App\Domain\Order\Projectors;
 
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Events\OrderCancelled;
@@ -11,14 +11,19 @@ use App\Domain\Order\Events\OrderPaid;
 use App\Domain\Order\Events\OrderPlaced;
 use App\Domain\Order\Events\OrderRefunded;
 use App\Domain\Order\Events\OrderShipped;
-use App\Models\Order;
+use App\Domain\Order\Models\Order;
+use App\Projectors\BaseProjector;
+use Illuminate\Support\Carbon;
 use Spatie\EventSourcing\StoredEvents\StoredEvent;
 
 final class OrderProjector extends BaseProjector
 {
     public function onOrderPlaced(OrderPlaced $event, StoredEvent $storedEvent): void
     {
-        Order::create([
+        $occurredAt = Carbon::parse($storedEvent->created_at);
+
+        $order = Order::new()->writeable();
+        $order->fill([
             'uuid' => $storedEvent->aggregate_uuid,
             'user_id' => $event->userId,
             'cart_uuid' => $event->cartUuid,
@@ -26,6 +31,10 @@ final class OrderProjector extends BaseProjector
             'total_in_cents' => $event->totalInCents,
             'status' => OrderStatus::Placed,
         ]);
+        $order->created_at = $occurredAt;
+        $order->updated_at = $occurredAt;
+        $order->timestamps = false;
+        $order->save();
     }
 
     public function onOrderPaid(OrderPaid $event, StoredEvent $storedEvent): void
@@ -35,9 +44,13 @@ final class OrderProjector extends BaseProjector
             return;
         }
 
+        $occurredAt = Carbon::parse($storedEvent->created_at);
+        $order = $order->writeable();
         $order->status = OrderStatus::Paid;
         $order->payment_reference = $event->paymentReference;
-        $order->paid_at = \now();
+        $order->paid_at = $occurredAt;
+        $order->updated_at = $occurredAt;
+        $order->timestamps = false;
         $order->save();
     }
 
@@ -48,9 +61,13 @@ final class OrderProjector extends BaseProjector
             return;
         }
 
+        $occurredAt = Carbon::parse($storedEvent->created_at);
+        $order = $order->writeable();
         $order->status = OrderStatus::Shipped;
         $order->tracking_number = $event->trackingNumber;
-        $order->shipped_at = \now();
+        $order->shipped_at = $occurredAt;
+        $order->updated_at = $occurredAt;
+        $order->timestamps = false;
         $order->save();
     }
 
@@ -61,8 +78,12 @@ final class OrderProjector extends BaseProjector
             return;
         }
 
+        $occurredAt = Carbon::parse($storedEvent->created_at);
+        $order = $order->writeable();
         $order->status = OrderStatus::Delivered;
-        $order->delivered_at = \now();
+        $order->delivered_at = $occurredAt;
+        $order->updated_at = $occurredAt;
+        $order->timestamps = false;
         $order->save();
     }
 
@@ -73,9 +94,13 @@ final class OrderProjector extends BaseProjector
             return;
         }
 
+        $occurredAt = Carbon::parse($storedEvent->created_at);
+        $order = $order->writeable();
         $order->status = OrderStatus::Cancelled;
         $order->cancellation_reason = $event->reason;
-        $order->cancelled_at = \now();
+        $order->cancelled_at = $occurredAt;
+        $order->updated_at = $occurredAt;
+        $order->timestamps = false;
         $order->save();
     }
 
@@ -86,7 +111,11 @@ final class OrderProjector extends BaseProjector
             return;
         }
 
+        $occurredAt = Carbon::parse($storedEvent->created_at);
+        $order = $order->writeable();
         $order->status = OrderStatus::Refunded;
+        $order->updated_at = $occurredAt;
+        $order->timestamps = false;
         $order->save();
     }
 }

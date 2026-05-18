@@ -6,10 +6,11 @@ namespace App\Repositories;
 
 use App\DataTransferObjects\Results\EventHistoryResult;
 use App\DataTransferObjects\Results\ReplayResult;
-use App\Models\Cart;
-use App\Models\Order;
+use App\Domain\Cart\Models\Cart;
+use App\Domain\Order\Models\Order;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Spatie\EventSourcing\StoredEvents\Models\EloquentStoredEvent;
 
 final class EventStoreRepository
@@ -52,8 +53,9 @@ final class EventStoreRepository
         $deletedOrders = Order::query()->count();
         $deletedCarts = Cart::query()->count();
 
-        Order::query()->delete();
-        Cart::query()->delete();
+        DB::table('orders')->delete();
+        DB::table('carts')->delete();
+        DB::table('order_history')->delete();
 
         Artisan::call('event-sourcing:replay', ['--no-interaction' => true]);
 

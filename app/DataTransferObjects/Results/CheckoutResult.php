@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\DataTransferObjects\Results;
 
-use App\Models\Order;
+use App\Domain\Order\Models\Order;
 
 final readonly class CheckoutResult
 {

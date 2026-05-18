@@ -11,8 +11,8 @@ use App\Domain\Order\Events\OrderPaid;
 use App\Domain\Order\Events\OrderPlaced;
 use App\Domain\Order\Events\OrderRefunded;
 use App\Domain\Order\Events\OrderShipped;
-use App\Models\Order;
-use App\Projectors\OrderProjector;
+use App\Domain\Order\Models\Order;
+use App\Domain\Order\Projectors\OrderProjector;
 use Spatie\EventSourcing\StoredEvents\ShouldBeStored;
 use Spatie\EventSourcing\StoredEvents\StoredEvent;
 use Tests\TestCase;
@@ -123,7 +123,7 @@ final class OrderProjectorTest extends TestCase
         $orderUuid = 'test-order-uuid';
         $this->createPlacedOrder($orderUuid);
 
-        $event = new OrderCancelled(reason: 'Changed my mind');
+        $event = new OrderCancelled(cartUuid: 'cart-uuid-1', reason: 'Changed my mind');
         $this->projector->onOrderCancelled($event, $this->makeStoredEvent($orderUuid, $event, 2));
 
         /** @var Order $order */

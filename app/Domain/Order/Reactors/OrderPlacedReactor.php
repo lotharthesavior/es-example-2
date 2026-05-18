@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Reactors;
+namespace App\Domain\Order\Reactors;
 
 use App\Domain\Order\Events\OrderPlaced;
+use App\Reactors\BaseReactor;
 use Illuminate\Support\Facades\Log;
-use Spatie\EventSourcing\EventHandlers\Reactors\Reactor;
 use Spatie\EventSourcing\StoredEvents\StoredEvent;
 
-final class OrderPlacedReactor extends Reactor
+final class OrderPlacedReactor extends BaseReactor
 {
     public function onOrderPlaced(OrderPlaced $event, StoredEvent $storedEvent): void
     {

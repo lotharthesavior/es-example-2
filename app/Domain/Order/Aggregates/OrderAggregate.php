@@ -25,6 +25,8 @@ final class OrderAggregate extends AggregateRoot
 
     private int $totalInCents = 0;
 
+    private string $cartUuid = '';
+
     public function placeOrder(PlaceOrder $command): self
     {
         if ($this->status !== null) {
@@ -85,6 +87,7 @@ final class OrderAggregate extends AggregateRoot
         }
 
         $this->recordThat(new OrderCancelled(
+            cartUuid: $this->cartUuid,
             reason: $command->reason,
         ));
 
@@ -107,6 +110,7 @@ final class OrderAggregate extends AggregateRoot
     {
         $this->status = OrderStatus::Placed;
         $this->totalInCents = $event->totalInCents;
+        $this->cartUuid = $event->cartUuid;
     }
 
     protected function applyOrderPaid(OrderPaid $event): void

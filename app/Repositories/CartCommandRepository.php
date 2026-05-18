@@ -15,7 +15,7 @@ use App\Domain\Order\Commands\PlaceOrder;
 use App\Exceptions\Domain\NoActiveCartToCheckoutException;
 use App\Exceptions\Domain\NoActiveCartWithItemsException;
 use App\Exceptions\Domain\NoProductsAvailableException;
-use App\Models\Cart;
+use App\Domain\Cart\Models\Cart;
 use Illuminate\Support\Str;
 use Spatie\EventSourcing\Commands\CommandBus;
 
@@ -57,11 +57,15 @@ final class CartCommandRepository
         $cartUuid = $dto->cartUuid;
         $productId = $dto->productId;
 
-        if ($cartUuid === null || $productId === null) {
+        if ($cartUuid === null) {
             $cart = $this->query->findActiveWithItems()
                 ?? throw new NoActiveCartWithItemsException;
-
             $cartUuid = $cart->uuid;
+        }
+
+        if ($productId === null) {
+            $cart = $this->query->findByUuid($cartUuid)
+                ?? throw new NoActiveCartWithItemsException;
             /** @var array<string, array{productId: string}> $items */
             $items = $cart->items ?? [];
             $productId = (string) (array_key_first($items) ?? '');

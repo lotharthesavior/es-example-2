@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Projectors;
+namespace App\Domain\Order\Projectors;
 
 use App\Domain\Order\Events\OrderCancelled;
 use App\Domain\Order\Events\OrderDelivered;
@@ -10,7 +10,9 @@ use App\Domain\Order\Events\OrderPaid;
 use App\Domain\Order\Events\OrderPlaced;
 use App\Domain\Order\Events\OrderRefunded;
 use App\Domain\Order\Events\OrderShipped;
-use App\Models\OrderHistory;
+use App\Domain\Order\Models\OrderHistory;
+use App\Projectors\BaseProjector;
+use Illuminate\Support\Carbon;
 use Spatie\EventSourcing\StoredEvents\StoredEvent;
 
 final class OrderHistoryProjector extends BaseProjector
@@ -61,11 +63,20 @@ final class OrderHistoryProjector extends BaseProjector
     /** @param array<string, mixed> $data */
     private function record(StoredEvent $storedEvent, string $eventType, array $data): void
     {
-        OrderHistory::create([
+        $occurredAt = $storedEvent->created_at !== ''
+            ? Carbon::parse($storedEvent->created_at)
+            : Carbon::now();
+
+        $history = OrderHistory::new()->writeable();
+        $history->fill([
             'order_uuid' => $storedEvent->aggregate_uuid,
             'event_type' => $eventType,
             'event_data' => $data,
-            'occurred_at' => $storedEvent->created_at !== '' ? $storedEvent->created_at : \now()->toIso8601String(),
+            'occurred_at' => $occurredAt,
         ]);
+        $history->created_at = $occurredAt;
+        $history->updated_at = $occurredAt;
+        $history->timestamps = false;
+        $history->save();
     }
 }

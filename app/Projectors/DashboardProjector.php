@@ -95,12 +95,16 @@ final class DashboardProjector extends BaseProjector
     private function broadcast(StoredEvent $storedEvent, string $eventName, string $aggregateType, array $payload): void
     {
         try {
+            $occurredAt = $storedEvent->created_at !== ''
+                ? \Illuminate\Support\Carbon::parse($storedEvent->created_at)->toIso8601String()
+                : \now()->toIso8601String();
+
             broadcast(new EventStreamBroadcast(
                 eventName: $eventName,
                 aggregateType: $aggregateType,
                 aggregateUuid: $storedEvent->aggregate_uuid,
                 payload: $payload,
-                occurredAt: $storedEvent->created_at !== '' ? $storedEvent->created_at : \now()->toIso8601String(),
+                occurredAt: $occurredAt,
             ));
         } catch (\Throwable $e) {
             // Broadcast failures should not break the projection pipeline.

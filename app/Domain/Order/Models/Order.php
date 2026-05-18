@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Domain\Order\Models;
 
 use App\Domain\Order\Enums\OrderStatus;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Spatie\EventSourcing\Projections\Projection;
 
 /**
  * @property string $uuid
@@ -25,15 +25,9 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-final class Order extends Model
+final class Order extends Projection
 {
     protected $table = 'orders';
-
-    protected $primaryKey = 'uuid';
-
-    public $incrementing = false;
-
-    protected $keyType = 'string';
 
     protected $fillable = [
         'uuid',

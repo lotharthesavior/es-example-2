@@ -13,7 +13,7 @@ use App\Domain\Order\Commands\MarkAsDelivered;
 use App\Domain\Order\Commands\MarkAsPaid;
 use App\Domain\Order\Commands\MarkAsShipped;
 use App\Domain\Order\Commands\PlaceOrder;
-use App\Models\Cart;
+use App\Domain\Cart\Models\Cart;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Seeder;

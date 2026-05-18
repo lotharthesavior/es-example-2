@@ -14,6 +14,9 @@ WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-interaction --no-scripts --no-autoloader --prefer-dist --ignore-platform-req=ext-openswoole
 
+COPY docker/entrypoint.sh /usr/local/bin/app-entrypoint
+RUN chmod +x /usr/local/bin/app-entrypoint
+
 COPY . .
 RUN composer dump-autoload --optimize \
     && mkdir -p storage/framework/{cache,sessions,views} bootstrap/cache \

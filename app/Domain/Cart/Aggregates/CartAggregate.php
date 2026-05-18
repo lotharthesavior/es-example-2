@@ -9,6 +9,7 @@ use App\Domain\Cart\Commands\ClearCart;
 use App\Domain\Cart\Commands\RemoveItemFromCart;
 use App\Domain\Cart\Commands\StartCheckout;
 use App\Domain\Cart\Events\CartCleared;
+use App\Domain\Cart\Events\CheckoutCancelled;
 use App\Domain\Cart\Events\CheckoutStarted;
 use App\Domain\Cart\Events\ItemAddedToCart;
 use App\Domain\Cart\Events\ItemRemovedFromCart;
@@ -81,6 +82,22 @@ final class CartAggregate extends AggregateRoot
         ));
 
         return $this;
+    }
+
+    public function cancelCheckout(): self
+    {
+        if (! $this->checkedOut) {
+            throw new \DomainException('Checkout has not been started.');
+        }
+
+        $this->recordThat(new CheckoutCancelled);
+
+        return $this;
+    }
+
+    protected function applyCheckoutCancelled(CheckoutCancelled $event): void
+    {
+        $this->checkedOut = false;
     }
 
     protected function applyItemAddedToCart(ItemAddedToCart $event): void

@@ -9,9 +9,11 @@
 /.cursor/
 /.idea
 /.nova
+/.playwright-mcp
 /.phpunit.cache
 /.vscode
 /.zed
+/.docker-state
 /auth.json
 /node_modules
 /public/build
@@ -21,6 +23,7 @@
 /storage/pail
 /vendor
 _ide_helper.php
+_ide_helper_models.php
 Homestead.json
 Homestead.yaml
 Thumbs.db

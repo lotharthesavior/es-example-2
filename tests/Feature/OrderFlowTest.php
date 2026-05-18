@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Domain\Order\Enums\OrderStatus;
-use App\Models\Cart;
-use App\Models\Order;
+use App\Domain\Cart\Models\Cart;
+use App\Domain\Order\Models\Order;
 use App\Models\Product;
 use Tests\TestCase;
 
