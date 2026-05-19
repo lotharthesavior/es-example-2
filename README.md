@@ -57,28 +57,9 @@ Aggregates are the single source of truth. Projections are disposable — delete
 ```bash
 # Clone and install
 git clone https://github.com/lotharthesavior/es-example-2 es-visible && cd es-visible
-composer install
-npm install
 
-# Configure
-cp .env.example .env
-php artisan key:generate
-
-# Database
-php artisan migrate
-php artisan db:seed          # seeds demo products + sample events
-
-# WebSocket server
-php artisan reverb:start &
-
-# Queue worker (processes events async)
-php artisan queue:work &
-
-# Assets
-npm run dev
-
-# Serve
-php artisan serve
+# Start docker containers
+docker compose up -d
 ```
 
 Open `http://localhost:8000` — the dashboard loads live.
