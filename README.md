@@ -1,6 +1,6 @@
 # ES Visible — Event Sourcing Order Dashboard
 
-A Laravel demo application showcasing **Event Sourcing** with real-time visibility into e-commerce order lifecycle events. Built for the PHPTek 2026 talk: *"Building Resilient PHP Applications with an Event-Driven Mindset."*
+A Laravel demo application showcasing **Event Sourcing** with real-time visibility into e-commerce order lifecycle events. Built for the PHPTek 2026 talk: _"Building Resilient PHP Applications with an Event-Driven Mindset."_
 
 ## What It Does
 
@@ -10,14 +10,14 @@ Every user interaction fires an explicit domain event. Projections rebuild read 
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | Laravel 11 |
+| Layer          | Technology                                                                     |
+| -------------- | ------------------------------------------------------------------------------ |
+| Framework      | Laravel 11                                                                     |
 | Event Sourcing | [Spatie Laravel Event Sourcing](https://spatie.be/docs/laravel-event-sourcing) |
-| Real-time | Laravel Reverb (WebSockets) + Echo |
-| Frontend | Alpine.js + Tailwind CSS |
-| Queue | Redis |
-| Database | SQLite (dev) / MySQL (prod) |
+| Real-time      | Laravel Reverb (WebSockets) + Echo                                             |
+| Frontend       | Alpine.js + Tailwind CSS                                                       |
+| Queue          | Redis                                                                          |
+| Database       | SQLite (dev) / MySQL (prod)                                                    |
 
 ## Domain Events
 
@@ -56,7 +56,7 @@ Aggregates are the single source of truth. Projections are disposable — delete
 
 ```bash
 # Clone and install
-git clone <repo> es-visible && cd es-visible
+git clone https://github.com/lotharthesavior/es-example-2 es-visible && cd es-visible
 composer install
 npm install
 
@@ -98,27 +98,6 @@ curl -X POST /api/orders -d '{"cart_id":"<uuid>"}'
 curl -X POST /api/orders/<uuid>/fulfil
 ```
 
-## Testing
-
-```bash
-# Unit + integration (Pest)
-php artisan test
-
-# Static analysis (PHPStan level 8)
-./vendor/bin/phpstan analyse
-
-# E2E browser tests (Laravel Dusk, headless Chromium)
-php artisan dusk
-```
-
-All three must pass before any PR merges.
-
-### What the tests cover
-
-- **Unit** — aggregates raise correct events, projectors build correct state
-- **Feature** — API endpoints, event replay consistency, projector idempotency
-- **E2E (Dusk)** — dashboard renders events in real time, full order flow visible end-to-end
-
 ## Key Concepts Demonstrated
 
 **Event replay** — drop any projection table, run `php artisan event-sourcing:replay`, and the read model rebuilds exactly.
@@ -150,12 +129,3 @@ tests/
 ├── Unit/                              # aggregate + event tests
 └── Browser/                           # Dusk E2E tests
 ```
-
-## Talk Context
-
-This repo accompanies the PHPTek 2026 session. The v2 talk builds on the Longhorn PHP 2025 version with:
-
-- Reverb replacing Pusher (self-hosted WebSockets)
-- Dusk E2E coverage of the real-time dashboard
-- PHPStan level 8 across the entire domain layer
-- Seeder-driven demos safe to run live on stage
