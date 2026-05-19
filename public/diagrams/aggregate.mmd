@@ -1,0 +1,34 @@
+flowchart LR
+    Client[Client] -->|Command| CH[Command Handler<br/>Application Service]
+
+    subgraph CH [Command Handler]
+        direction TB
+        Load[Load Aggregate<br/>replay events]
+        Invoke[Call method on Aggregate]
+    end
+
+    CH --> Load
+    Load --> Invoke
+    Invoke --> AGG[AGGREGATE]
+
+    subgraph AGG [AGGREGATE]
+        direction TB
+        Logic[Domain Logic &<br/>Invariant Validation]
+        Events[Produces Domain Events]
+    end
+
+    AGG --> Logic
+    Logic --> Events
+
+    Events -->|Emits Events| ES[(Event Store)]
+
+    ES -->|Event Stream<br/>replay / hydration| Load
+
+    ES --> Projections[Projections]
+    Projections --> RM[Read Models]
+
+    classDef aggregate fill:#dbeafe,stroke:#1e40af,stroke-width:2px
+    class AGG aggregate
+
+    classDef handler fill:#e0e7ff,stroke:#4338ca
+    class CH handler
