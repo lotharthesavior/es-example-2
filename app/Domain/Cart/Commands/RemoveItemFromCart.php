@@ -14,6 +14,6 @@ final readonly class RemoveItemFromCart
     public function __construct(
         #[AggregateUuid] public string $cartUuid,
         public string $productId,
-        public int $quantity = 1,
+        public ?int $quantity = null,
     ) {}
 }
