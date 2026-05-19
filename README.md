@@ -14,7 +14,7 @@ Every user interaction fires an explicit domain event. Projections rebuild read 
 | -------------- | ------------------------------------------------------------------------------ |
 | Framework      | Laravel 11                                                                     |
 | Event Sourcing | [Spatie Laravel Event Sourcing](https://spatie.be/docs/laravel-event-sourcing) |
-| Real-time      | Laravel Reverb (WebSockets) + Echo                                             |
+| Real-time      | [Socket Conveyor](https://socketconveyor.com)                                  |
 | Frontend       | Alpine.js + Tailwind CSS                                                       |
 | Queue          | Redis                                                                          |
 | Database       | SQLite (dev) / MySQL (prod)                                                    |
